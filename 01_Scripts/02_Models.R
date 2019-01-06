@@ -174,32 +174,3 @@ vip(xgb.fit, fill = "#2b8cbe") + ggtitle("xgBoost")
 saveRDS(xgb.fit, file="03_Models/xgb_model.rda")
 
 
-#########################################################
-#
-# svmRadial
-#
-#########################################################
-svmRadial_grid = NULL
-
-set.seed(5432)
-system.time(svmRadial.fit <- train(Churn ~ .,data = trainData,
-                                   method = "svmRadial",
-                                   trControl = fitControl,
-                                   tuneLength = 5,
-                                   preProcess = c("center", "scale"),
-                                   metric = "ROC"))
-
-#   user  system elapsed 
-# 877.45  328.03  500.64 
-#   user  system elapsed 
-# 1072.61  378.92  831.18 
-
-svmRadial.predict <- predict(svmRadial.fit, newdata = testData)
-mean(svmRadial.predict == testData$Churn)
-varImp(svmRadial.fit)
-plot(varImp(svmRadial.fit), top=10, main="svmRadial")
-
-plot(svmRadial.fit)
-vip(svmRadial.fit, fill = "#2b8cbe") + ggtitle("svmRadial") 
-
-saveRDS(svmRadial.fit, file="03_Models/svmRadial_model.rda")
