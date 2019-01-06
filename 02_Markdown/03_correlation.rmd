@@ -1,0 +1,49 @@
+---
+title: "correlation"
+author: "Matt Dube"
+date: "December 15, 2018"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, message=FALSE}
+library(readr)
+library(dplyr)
+library(here)
+library(sjPlot)
+```
+
+Load data
+```{r, message=FALSE}
+customer <- read_csv(here("00_Data/raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
+
+```
+```{r}
+chisq.test(customer$Churn, customer$gender)
+
+```
+
+```{r}
+customer_twoLevels <- customer %>%
+    mutate(SeniorCitizen = ifelse(SeniorCitizen == 1, "Yes", "No")) %>%
+    select(gender, SeniorCitizen, Partner, Dependents, PhoneService, Churn)
+
+```
+
+```{r}
+sjp.chi2(as.data.frame(customer_twoLevels), title = "Pearson's Chi2-Test of Independence")
+
+```
+```{r}
+customer_clean <- customer %>%
+    filter(!is.na(TotalCharges)) %>%
+    select(-c(customerID, TotalCharges, gender, PhoneService)) %>%
+    mutate(SeniorCitizen = ifelse(SeniorCitizen == 1, "Yes", "No"),
+           Churn = as.factor(Churn)) %>%
+    mutate_if(is.character, as.factor)
+```
+
