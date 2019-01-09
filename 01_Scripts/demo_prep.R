@@ -7,11 +7,16 @@ library(readr)
 library(lime)
 library(vip)
 library(caret)
+library(patchwork)
+library(gbm)
+library(gridExtra)
+library(tibble)
 
 # load saved data set
 customer_clean <- read_csv(here("00_Data/clean", "customer_clean.csv"))
 
-# split dataset.seed(5432)
+# split data
+set.seed(5432)
 index <- createDataPartition(customer_clean$Churn, p=.75, list = FALSE)
 trainData <- customer_clean[index,]
 testData <- customer_clean[-index,]
@@ -30,6 +35,7 @@ nnet.fit <- readRDS(here("03_Models/", "nnet_model.rda"))
 xgb.fit <- readRDS(here("03_Models/", "xgb_model.rda"))
 
 # predict using all five models on test data
+set.seed(5432)
 glmnet.predict <- predict(glmnet.fit, newdata = testData)
 gbm.predict <- predict(gbm.fit, newdata = testData)
 nnet.predict <- predict(nnet.fit, newdata = testData)
