@@ -41,10 +41,6 @@ explanation_mars <- explain(
   labels = "Yes"
   )
 
-
-
-
-
 explanation_gbm <- explain(
   x = sample1,
   explainer = explainer_gbm,

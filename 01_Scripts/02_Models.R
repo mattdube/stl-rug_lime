@@ -41,10 +41,11 @@ system.time(glmnet.fit <- train(Churn ~ .,data = trainData,
 #  12.30    0.13   12.62 
 
 glmnet.predict <- predict(glmnet.fit, newdata = testData)
-mean(glmnet.predict == testData$Churn)
+saveRDS(glmnet.predict, file = "03_Models/glmnet.fit.rda")
+#mean(glmnet.predict == testData$Churn)
 
-vip(glmnet.fit, fill = "#2b8cbe") + ggtitle("glmnet")
-varImp(glmnet.fit)
+#vip(glmnet.fit, fill = "#2b8cbe") + ggtitle("glmnet")
+#varImp(glmnet.fit)
 saveRDS(glmnet.fit, file = "03_Models/glmnet_model.rda")
 
 #########################################################
@@ -72,10 +73,11 @@ system.time(gbm.fit <- train(Churn ~ .,data = trainData,
 #  56.36    0.29   60.87 
 
 gbm.predict <- predict(gbm.fit, newdata = testData)
-mean(gbm.predict == testData$Churn)
+saveRDS(gbm.predict, file = "03_Models/gbm.predict.rda")
+#mean(gbm.predict == testData$Churn)
 
-varImp(gbm.fit)
-vip(gbm.fit, fill = "#2b8cbe") + ggtitle("GBM")
+#varImp(gbm.fit)
+#vip(gbm.fit, fill = "#2b8cbe") + ggtitle("GBM")
 saveRDS(gbm.fit, file = "03_Models/gbm_model.rda")
 
 #########################################################
@@ -98,10 +100,11 @@ system.time(nnet.fit <- train(Churn ~ .,data = trainData,
 #  833.03    5.61  847.61 
 
 nnet.predict <- predict(nnet.fit, newdata = testData)
-mean(nnet.predict == testData$Churn)
+saveRDS(nnet.predict, file = "03_Models/nnet.predict.rda")
+#mean(nnet.predict == testData$Churn)
 
-varImp(nnet.fit)
-vip(nnet.fit, fill = "#2b8cbe") + ggtitle("nnet") 
+#varImp(nnet.fit)
+#vip(nnet.fit, fill = "#2b8cbe") + ggtitle("nnet") 
 
 saveRDS(nnet.fit, file = "03_Models/nnet_model.rda")
 
@@ -128,12 +131,13 @@ system.time(mars.fit <- train(Churn ~ .,data = trainData,
 
 
 mars.predict <- predict(mars.fit, newdata = testData)
-mean(mars.predict == testData$Churn)
+saveRDS(mars.predict, file = "03_Models/mars.predict.rda")
+#mean(mars.predict == testData$Churn)
 
-varImp(mars.fit)
-summary(mars.fit)
-plot(mars.fit)
-vip(mars.fit, fill = "#2b8cbe") + ggtitle("MARS") 
+#varImp(mars.fit)
+#summary(mars.fit)
+#plot(mars.fit)
+#vip(mars.fit, fill = "#2b8cbe") + ggtitle("MARS") 
 
 saveRDS(mars.fit, file = "03_Models/mars_model.rda")
 
@@ -164,12 +168,13 @@ system.time(xgb.fit <- train(Churn ~ .,data = trainData,
 # 1072.61  378.92  831.18 
 
 xgb.predict <- predict(xgb.fit, newdata = testData)
-mean(xgb.predict == testData$Churn)
-varImp(xgb.fit)
-plot(varImp(xgb.fit), top=10, main="XGB")
+saveRDS(xgb.predict, file = "03_Models/xgb.predict.rda")
+#mean(xgb.predict == testData$Churn)
+#varImp(xgb.fit)
+#plot(varImp(xgb.fit), top=10, main="XGB")
 
-plot(xgb.fit)
-vip(xgb.fit, fill = "#2b8cbe") + ggtitle("xgBoost") 
+#plot(xgb.fit)
+#vip(xgb.fit, fill = "#2b8cbe") + ggtitle("xgBoost") 
 
 saveRDS(xgb.fit, file="03_Models/xgb_model.rda")
 
