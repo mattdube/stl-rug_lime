@@ -13,13 +13,16 @@ library(gridExtra)
 library(tibble)
 
 # load saved data set
-customer_clean <- read_csv(here("00_Data/clean", "customer_clean.csv"))
+#customer_clean <- read_csv(here("00_Data/clean", "customer_clean.csv"))
 
 # split data
-set.seed(5432)
-index <- createDataPartition(customer_clean$Churn, p=.75, list = FALSE)
-trainData <- customer_clean[index,]
-testData <- customer_clean[-index,]
+# set.seed(5432)
+# index <- createDataPartition(customer_clean$Churn, p=.75, list = FALSE)
+# trainData <- customer_clean[index,]
+# testData <- customer_clean[-index,]
+
+trainData <- readRDS(here("00_Data/trainData.rda"))
+testData <- readRDS(here("00_Data/testData.rda"))
 
 # separate features and response for lime
 train_x <- trainData %>% select(-Churn)
@@ -33,6 +36,13 @@ glmnet.fit <- readRDS(here("03_Models/", "glmnet_model.rda"))
 mars.fit <- readRDS(here("03_Models/", "mars_model.rda"))
 nnet.fit <- readRDS(here("03_Models/", "nnet_model.rda"))
 xgb.fit <- readRDS(here("03_Models/", "xgb_model.rda"))
+
+# gbm.predict <- readRDS(here("03_Models/", "gbm.predict.rda"))
+# glmnet.predict <- readRDS(here("03_Models/", "glmnet.predict.rda"))
+# mars.predict <- readRDS(here("03_Models/", "mars.predict.rda"))
+# nnet.predict <- readRDS(here("03_Models/", "nnet.predict.rda"))
+# xgb.predict <- readRDS(here("03_Models/", "xgb.predict.rda"))
+
 
 # predict using all five models on test data
 set.seed(5432)
