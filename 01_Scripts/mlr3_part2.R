@@ -1,5 +1,5 @@
-library(dplyr)
-library(readr)
+# library(dplyr)
+# library(readr)
 library(ggplot2)
 library(ggthemes)
 library(data.table)
@@ -11,6 +11,7 @@ library(mlr3pipelines)
 library(mlr3tuning)
 
 library(paradox)
+library(pryr)
 
 
 # remotes::install_github("mlr-org/mlr3db")
@@ -20,67 +21,100 @@ library(paradox)
 # remotes::install_github("mlr-org/mlr3pipelines")
 
 # Load data
-customer <- read_csv(here::here("00_Data/raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
-
+#customer <- read_csv(here::here("00_Data/raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
+customerDT <- fread(here::here("00_Data/raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
 # clean data
-customer_clean <- customer %>%
-  filter(!is.na(TotalCharges)) %>%
-  select(-c(customerID, TotalCharges, gender, PhoneService)) %>%
-  mutate(SeniorCitizen = ifelse(SeniorCitizen == 1, "Yes", "No"),
-         Churn = as.factor(Churn)) %>%
-  mutate_if(is.character, as.factor)
+customerDT[,c("customerID", "TotalCharges", "gender", "PhoneService") := NULL][
+    ,Churn := as.factor(Churn)][
+      , SeniorCitizen := ifelse(SeniorCitizen == 1, "Yes", "No")]
+
+cols = colnames(customerDT)[1:3]
+cols2 = colnames(customerDT)[5:15]
+customerDT[,(cols):= lapply(.SD, as.factor), .SDcols=cols][
+  ,(cols2):= lapply(.SD, as.factor), .SDcols = cols2]
+
+
+
+
+str(customerDT)
+
+# customer <- customer %>%
+#   filter(!is.na(TotalCharges)) %>%
+#   select(-c(customerID, TotalCharges, gender, PhoneService)) %>%
+#   mutate(SeniorCitizen = ifelse(SeniorCitizen == 1, "Yes", "No"),
+#          Churn = as.factor(Churn)) %>%
+#   mutate_if(is.character, as.factor)
 
 
 write_csv(customer_clean, here::here("00_Data/clean/", "customer_clean.csv"))
 
 # create task
-task_cust <- TaskClassif$new(id = "churn", backend = customer_clean, target = "Churn", positive = "Yes")
+tsk_cust <- TaskClassif$new(id = "churn", backend = customerDT, target = "Churn", positive = "Yes")
 
 # review task
-task_cust
-task_cust$ncol
-task_cust$nrow
-task_cust$feature_names
-task_cust$feature_types
-task_cust$col_roles
+tsk_cust
+tsk_cust$ncol
+tsk_cust$nrow
+tsk_cust$feature_names
+tsk_cust$feature_types
+tsk_cust$col_roles
+tsk_cust$formula()
+tsk_cust$class_names
+tsk_cust$tsk_type
+tsk_cust$data()
 
 # split data train/test
 set.seed(4411)
-train.idx <- sample(seq_len(task_cust$nrow), 0.7 * task_cust$nrow)
-test.idx <- setdiff(seq_len(task_cust$nrow), train.idx)
+train.idx <- sample(seq_len(tsk_cust$nrow), 0.7 * tsk_cust$nrow)
+test.idx <- setdiff(seq_len(tsk_cust$nrow), train.idx)
 
 length(train.idx)
 length(test.idx)
 
 # create learner
-lrn_cust <- mlr_learners$get("classif.rpart")
+lrn_rpart <- mlr_learners$get("classif.rpart")
 
 # decision tree
-lrn_cust$train(task_cust, row_ids = train.idx)
+lrn_rpart$train(tsk_cust, row_ids = train.idx)
 
-plot(lrn_cust$model)
-text(lrn_cust$model)
+plot(lrn_rpart$model)
+text(lrn_rpart$model)
 
-lrn_cust$model
-lrn_cust$importance()
+lrn_rpart$model
+lrn_rpart$importance()
 
 # create resampling strategy - 5 fold cross-validation - using only the training data
-cv5 <- rsmp("cv", folds = 5, iters = 3)
-cv5$instantiate(task_cust$clone()$filter(train.idx))
+cv5 <- rsmp("cv", folds = 5)
+cv5$instantiate(tsk_cust$clone()$filter(train.idx))
 
 rcv5 <- rsmp("repeated_cv", folds = 5, repeats = 3)
 
 # decision tree using cv plan
 lrn_rpart <- lrn("classif.rpart", predict_type = "prob")
 
-lrn_rpart$train(task_cust)
-rpart_predict <- lrn_rpart$predict(task_cust)
+as.data.table(mlr_measures)
+measure = msr("classif.auc")
+meas_ce = msr("classif.ce")
+
+lrn_rpart$train(tsk_cust)
+rpart_predict <- lrn_rpart$predict(tsk_cust)
 rpart_predict$score(measure)
+rpart_predict$score(meas_ce)
 rpart_predict$confusion
 
 
-res <- resample(task = task_cust$clone()$filter(train.idx), lrn_rpart, cv5)
+res <- resample(task = tsk_cust$clone()$filter(train.idx), lrn_rpart, cv5)
 res$score("classif.ce")
+
+rr5 <- resample(task = tsk_cust$clone()$filter(train.idx), lrn_rpart, rcv5, store_models = TRUE)
+rr5
+rr5$resampling
+rr5$resampling$iters
+rr5$resampling$test_set(3)
+lrn_1 = rr5$learners[[1]]
+lrn_1$model
+
+
 # > res$aggregate()
 # classif.ce 
 # 0.211906 
@@ -92,9 +126,9 @@ res$score("classif.ce")
 # random forest (ranger)
 lrn_ranger <- lrn("classif.ranger", predict_type = "prob", num.trees = 15L)
 
-res_ranger <- resample(task = task_cust$clone()$filter(train.idx), lrn_ranger, cv5)
-res_ranger$score("classif.ce")
-res_ranger$aggregate()
+rr_ranger <- resample(task = tsk_cust$clone()$filter(train.idx), lrn_ranger, rcv5)
+rr_ranger$score("classif.ce")
+rr_ranger$aggregate()
 1 - res_ranger$aggregate()
 
 # > res_ranger$aggregate()
@@ -104,4 +138,7 @@ res_ranger$aggregate()
 # classif.ce 
 # 0.7820016 
 
-
+lrn_xgboost <- lrn("classif.xgboost")
+rr_xg <- resample(task = tsk_cust$clone()$filter(train.idx), lrn_xgboost, rcv5, store_models = TRUE)
+rr_xg$score("classif.ce")
+rr_xg$aggregate()

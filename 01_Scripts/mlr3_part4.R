@@ -44,6 +44,25 @@ bmr$aggregate(measure)
 at$train(task_cust)
 predict_glm = at$predict(task_cust)
 
+tuned_glmnet_model <- at$model
+tuned_glmnet <- at
+
+save(tuned_glmnet, file = "03_Models/tuned_glmnet.rda")
+saveRDS(tuned_glmnet_model, file = "03_Models/tuned_glmnet_model.rds")
+saveRDS(tuned_glmnet, file = "03_Models/tuned_glmnet.rds")
+
+saveRDS(task_cust, file = "03_Models/task_cust.rds")
+saveRDS(customer_clean, file = "03_Models/customer_clean.rds")
+
+
+model.glmnet <- vector(mode = 'list')
+
+model.glmnet$tuned_glmnet <- tuned_glmnet
+model.glmnet$task_cust <- task_cust
+model.glmnet$customer_clean <- customer_clean
+
+saveRDS(model.glmnet, file = "03_Models/model_glmnet.rds")
+
 at$predict(task_cust)$confusion
 at$predict(task_cust)$score(measure)
 at$predict(task_cust)$score(msr("classif.ce"))
@@ -52,3 +71,4 @@ at$predict(task_cust)$score(msr("classif.ce"))
 lrn_xgboost <- lrn("classif.xgboost")
 
 lrn_xgboost$param_set
+

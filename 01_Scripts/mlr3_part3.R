@@ -1,12 +1,14 @@
 library(mlr3viz)
-
+library(mlr3pipelines)
+library(paradox)
+library(mlr3tuning)
 ?mlr3pipelines::PipeOpEncode
 
 lrn_ranger <- lrn("classif.ranger", predict_type = "prob", num.trees = 15L)
 lrn_rpart <- lrn("classif.rpart", predict_type = "prob")
 
 # create task
-task_cust <- TaskClassif$new(id = "churn", backend = customer_clean, target = "Churn", positive = "Yes")
+tsk_cust <- TaskClassif$new(id = "churn", backend = customer_clean, target = "Churn", positive = "Yes")
 
 # split data train/test
 set.seed(4411)
@@ -20,6 +22,92 @@ lrn_glmnet$param_set
 # create preprocessing and learner pipeline
 op1 <- PipeOpScale$new()
 op2 <- PipeOpEncode$new()
+
+graph_pp_xgb = op1 %>>% op2 %>>%
+  mlr_pipeops$get("learner",
+                  learner = lrn_xgboost)
+
+plot(graph_pp_xgb, html = TRUE)
+
+graph_pp_xgb$train(tsk_cust)
+graph_pp_xgb$state[3]
+
+gxglrn = GraphLearner$new(graph_pp_xgb)
+
+gxglrn$train(tsk_cust)
+
+gxglrn$model
+
+
+gxglrn$train(tsk_cust)$state
+as.data.table(gxglrn$param_set)
+
+xg_prediction <- gxglrn$predict(tsk_cust)
+xg_prediction$score("classif.ce")
+
+rr_gxglrn <- resample(tsk_cust, gxglrn, rcv5, store_models = TRUE)
+rr_gxglrn$aggregate()
+
+tune_xg_ps <- ParamSet$new(list(
+  ParamDbl$new("classif.xgboost.eta", lower = 0.01, upper = 0.3),
+  ParamInt$new("classif.xgboost.nrounds", lower = 100, upper = 1000)
+))
+
+# meas_ce
+# rcv5
+
+evals20 <- term("evals", n_evals = 20)
+
+instance <- TuningInstance
+
+
+
+instance = TuningInstance$new(
+  task = task_cust,
+  learner = glrn_glm,
+  resampling = hout,
+  measures = tune_measure,
+  param_set = glrn_glm_ps,
+  terminator = evals20
+)
+
+instance
+
+tuner = tnr("random_search")
+
+result = tuner$tune(instance)
+
+
+at_xgb = AutoTuner$new(
+  learner = gxglrn,
+  resampling = rcv5,
+  measures = meas_ce,
+  tune_ps = tune_xg_ps,
+  terminator = evals20,
+  tuner = tuner
+)
+
+at_xgb
+
+grid = benchmark_grid(
+  task = tsk_cust,
+  learner = list(at_xgb, gxglrn, lrn_rpart),
+  resamplings = rsmp("cv", folds = 3)
+)
+
+bmr = benchmark(grid)
+
+bmr$aggregate(measure)
+
+
+
+
+
+
+
+
+
+
 
 
 graph_pp_glm = op1 %>>% op2 %>>%

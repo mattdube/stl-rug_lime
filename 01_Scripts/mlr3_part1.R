@@ -13,6 +13,7 @@ library(paradox)
 
 
 
+
 # Load data
 customer <- read_csv(here("00_Data/raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
 
