@@ -1,0 +1,6 @@
+package,Function
+mlr3cluster,Extensions for cluster analysis.
+mlr3fda,Extensions for functional data analysis.
+mlr3forecasting,Extensions for forecasting.
+mlr3kereas,Extensions for deep learning via keras.
+mlr3extralearners,"Extension to source additional learners from remote sources, like GitHub."

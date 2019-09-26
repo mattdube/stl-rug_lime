@@ -28,13 +28,10 @@ customerDT[,c("customerID", "TotalCharges", "gender", "PhoneService") := NULL][
     ,Churn := as.factor(Churn)][
       , SeniorCitizen := ifelse(SeniorCitizen == 1, "Yes", "No")]
 
-cols = colnames(customerDT)[1:3]
-cols2 = colnames(customerDT)[5:15]
-customerDT[,(cols):= lapply(.SD, as.factor), .SDcols=cols][
-  ,(cols2):= lapply(.SD, as.factor), .SDcols = cols2]
-
-
-
+# cols = colnames(customerDT)[1:3]
+# cols2 = colnames(customerDT)[5:15]
+# customerDT[,(cols):= lapply(.SD, as.factor), .SDcols=cols][
+#   ,(cols2):= lapply(.SD, as.factor), .SDcols = cols2]
 
 str(customerDT)
 
@@ -62,6 +59,22 @@ tsk_cust$formula()
 tsk_cust$class_names
 tsk_cust$tsk_type
 tsk_cust$data()
+
+
+# EDA plot of task ###################################
+p <- autoplot(tsk_cust, type = "pairs") + theme_light()
+
+autoplot(tsk_cust) + facet_wrap(~Contract) + theme_light()
+
+for(i in 1:p$nrow) {
+  for(j in 1:p$ncol){
+    p[i,j] <- p[i,j] + 
+      scale_fill_economist() +
+      scale_color_economist()  
+  }
+}
+
+p
 
 # split data train/test
 set.seed(4411)

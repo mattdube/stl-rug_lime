@@ -1,0 +1,13 @@
+package,Function
+mlr3,Core learners and base functionality.
+mlr3db,"DataBackend for dplyr. Allows tasks to operate on various storage systems (Spark, SQL, etc.)."
+mlr3learners,Additional learners for regression and classification.
+mlr3pipelines,Pipelines for pre-processing and building complex workflows.
+mlr3tuning,"Hyperparameter tuning via random search, grid search, …"
+mlr3filters,Variable selection filters.
+mlr3fswrap,"Variable selection wrappers like sequential forward/backward search, exhaustive search, or genetic algorithms."
+mlr3survival,Extensions for survival analysis.
+mlr3ordinal,Extensions for ordinal regression.
+mlr3viz,Extensions for visualization of mlr3 objects.
+mlr3spatiotemporal,Extensions for spatiotemporal resampling methods.
+mlr3hyperband,Implements the “hyperband” approach for hyperparamter tuning.
