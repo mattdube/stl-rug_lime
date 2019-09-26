@@ -1,0 +1,80 @@
+---
+title: "mlr3"
+author: "Matt Dube"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: show
+---
+
+```{r setup, echo=TRUE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+## Setup
+
+### Load Packages
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(data.table)
+library(mlr3)
+library(mlr3viz)
+```
+
+### Load Data
+```{r load_data}
+customerDT <- fread(here::here("00_Data/raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
+```
+
+### Prep Data
+```{r clean_data}
+customerDT[,c("customerID", "TotalCharges", "gender", "PhoneService") := NULL][
+    ,Churn := as.factor(Churn)][
+      , SeniorCitizen := ifelse(SeniorCitizen == 1, "Yes", "No")]
+```
+
+## Create Task 
+a new task is created with:
+  `TaskClassif$new(id = "churn", backend = customerDT, target = "Churn", positive = "Yes")`
+  
+- id = "churn" --> task identifier, optional
+- backend = customerDT --> backend sets the dataset for the task. 
+- target = "Churn" --> target variable in the backend dataset 
+- positive = "Yes" --> what factor of the target variable is the positive class
+
+```{r create_task}
+tsk_cust <- TaskClassif$new(id = "churn", backend = customerDT, target = "Churn", positive = "Yes")
+```
+
+### Review task
+The created task is an R6 object. There are several methods that can be used to review the task details.
+
+- `tsk_cust`
+- `tsk_cust$ncol`
+- `tsk_cust$nrow`
+- `tsk_cust$feature_names`
+- `tsk_cust$feature_types`
+- `tsk_cust$col_roles`
+- `tsk_cust$formula()`
+- `tsk_cust$class_names`
+- `tsk_cust$data()`
+
+```{r review_task}
+tsk_cust
+tsk_cust$ncol
+tsk_cust$nrow
+tsk_cust$feature_names
+tsk_cust$feature_types
+tsk_cust$col_roles
+tsk_cust$formula()
+tsk_cust$class_names
+tsk_cust$data()
+```
+
+
+
+
