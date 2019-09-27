@@ -96,6 +96,12 @@ text(lrn_rpart$model)
 lrn_rpart$model
 lrn_rpart$importance()
 
+rpart_predict <- lrn_rpart$predict(tsk_cust, test.idx)
+meas_ce <- msr("classif.ce")
+meas_acc <- msr("classif.acc")
+
+rpart_predict$score(list(meas_ce, meas_acc))
+
 # create resampling strategy - 5 fold cross-validation - using only the training data
 cv5 <- rsmp("cv", folds = 5)
 cv5$instantiate(tsk_cust$clone()$filter(train.idx))
@@ -138,6 +144,9 @@ lrn_1$model
 
 # random forest (ranger)
 lrn_ranger <- lrn("classif.ranger", predict_type = "prob", num.trees = 15L)
+lrn_ranger$train(tsk_cust, train.idx)
+ranger_predict <- lrn_ranger$predict(tsk_cust, test.idx)
+ranger_predict$score(list(meas_ce, meas_acc))
 
 rr_ranger <- resample(task = tsk_cust$clone()$filter(train.idx), lrn_ranger, rcv5)
 rr_ranger$score("classif.ce")
