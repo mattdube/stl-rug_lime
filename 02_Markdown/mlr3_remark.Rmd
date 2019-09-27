@@ -17,11 +17,38 @@ output:
 options(htmltools.dir.version = FALSE)
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
-```{r}
+```{r, echo=FALSE}
 library(data.table)
 library(mlr3)
 library(DT)
 ```
+# Intro and a few notes
+Topic Overview
+- what we won't be covering
+  - this is not a machine learning how-to
+  - we won't be going in-depth on feature engineering, resampling, model selection, etc.
+
+- what we will be covering
+  - overview of mlr3 and the mlr3 family of packages
+  - several small examples, and
+  - one demo that puts it all together
+
+<b>Keep in mind:</b>
+- mlr3 (and extension packages) are under active development
+
+- examples today may not  work next week
+
+- if something breaks, the [documention](https://mlr3.mlr-org.com/index.html) is very good, and updated often
+
+- this is a <strong>BIG</strong> topic, we won't cover it all
+ - read the docs, and check the references at the end of this deck
+ 
+- there is some different terminology and syntax
+ - don't get hung up on the differences and quirks
+
+- some of this may offend your normal R sensibilities
+
+---
 
 # Machine Learning in R: Current State
 .pull-left[
@@ -45,6 +72,16 @@ library(DT)
 - Caret
 - mlr]
 ]
+
+R does not define a standardized interface for its machine-learning algorithms. Therefore, for any non-trivial experiments, you need to write lengthy, tedious and error-prone wrappers to call the different algorithms and unify their respective output.
+
+Additionally you need to implement infrastructure to:
+
+- resample your models
+- optimize hyperparameters
+- select features
+- cope with pre- and post-processing of data and compare models in a statistically meaningful way.
+
 
 ---
 # Why mlr3?
@@ -78,13 +115,15 @@ library(DT)
 - utilizes R6 OO toolkit
 
 - truly object-oriented: data and methods together
-inheritance
+
+  - inheritance
+  - reference semantics
 
 - embrace data.table, both for arguments and internal data structures
 
 - light on dependencies 
-
-- ~ 10 packages – 4 of which are developed by mlr team
+ - ~ 10 packages – 4 of which are developed by mlr team
+ - R6, data.table, Metrics, lgr 
 
 - utilizes future and future.apply for parallelization
 
@@ -97,8 +136,11 @@ inheritance
 .pull-left[
 The mlr3 package provides R6 classes for the essential building blocks of the machine learning workflow:
 - A <strong>task</strong> encapsulates the data along with additional information, such as what the prediction target is.
+
 - A <strong>learner</strong> encapsulates one of R’s many machine learning algorithms and allows to train models and make predictions. Most learners have hyperparameters that affect their operation.
+
 - A <strong>measure</strong> computes a numeric score based on predicted and ground-truth values and their difference.
+
 - A <strong>resampling</strong> strategy specifies a series of train and test sets and is used to assess the performance of an algorithm.
 ]
 
@@ -114,17 +156,21 @@ pre-defined tasks, learners, resamplings, and measures are stored in the followi
 - mlr_resamplings
 - mlr_measures
 
-```{r}
-library(data.table)
-as.data.table(mlr_tasks)
-```
 
+<b>mlr_tasks: built-in data sets</b>
 ```{r}
-as.data.table(mlr_learners)
-```
+as.data.table(mlr_tasks)[,.(key, task_type)]
 
+```
 
 ---
+# mlr3 learners: base package
+```{r}
+as.data.table(mlr_learners)[,list(key,packages, predict_types)]
+```
+
+---
+
 # mlr3 extension packages
 ```{r, echo=FALSE}
 mlr3_ext <- data.table::fread(here::here("00_Data/raw/mlr3_package_list.csv"))
@@ -138,6 +184,12 @@ DT::datatable(
 )
 ```
 
+---
+# mlr3 learners: extension package loaded
+```{r}
+library(mlr3learners)
+as.data.table(mlr_learners)[,list(key,packages, predict_types)]
+```
 
 ---
 # mlr3 extension packages <strong>planned</strong>
@@ -152,7 +204,7 @@ DT::datatable(
 ---
 # Setup
 
-Install the **xaringan** package from [Github](https://github.com/yihui/xaringan):
+Install the mlr3 packages from [Github](https://github.com/mlr-org):
 
 ```{r, eval=FALSE}
 remotes::install_github("mlr-org/mlr3")
@@ -168,11 +220,12 @@ remotes::install_github("mlr-org/mlr3pipelines")
 Load packages
 
 ```{r, eval=FALSE}
-library(ggplot2)
-library(ggthemes)
 library(data.table)
 library(mlr3)
 library(mlr3viz)
+library(mlr3learners)
+library(mlr3pipelines)
+library(mlr3tuning)
 ```
 
 .footnote[
