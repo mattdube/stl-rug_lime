@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
   <head>
-    <title>Next Generation Maching Learning in R</title>
+    <title>Maching Learning in R with mlr3</title>
     <meta charset="utf-8" />
     <meta name="author" content="Matt Dube" />
     <link href="libs/remark-css/mlr3.css" rel="stylesheet" />
@@ -20,10 +20,10 @@
     <textarea id="source">
 class: center, middle, inverse, title-slide
 
-# Next Generation Maching Learning in R
+# Maching Learning in R with mlr3
 ## with mlr3
 ### Matt Dube
-### 2019/09/26 (updated: 2019-09-29)
+### 2019/09/26 (updated: 2019-10-01)
 
 ---
 
@@ -131,7 +131,7 @@ Additionally you need to implement infrastructure to:
 
 - light on dependencies 
  - ~ 10 packages – 4 of which are developed by mlr team
- - R6, data.table, Metrics, lgr 
+ - R6, data.table, Metrics, lgr, digest, uuid, mlbench 
 
 - utilizes future and future.apply for parallelization
 
@@ -157,7 +157,41 @@ The mlr3 package provides R6 classes for the essential building blocks of the ma
 ]
 
 ---
-# mlr3 Overview
+
+# mlr3 and its extension packages
+
+| Package | Functionality |
+| :-      | :------------ |
+| `mlr3`  | Framework for machine learning: `Task`, `Learner`, `resample()` and `benchmark()` |
+| `mlr3learners` | Concrete `Learner`s for many popular machine learning implementations |
+| `mlr3pipelines` | Dataflow programming of machine learning workflows. |
+| `mlr3tuning` | Hyperparameter tuning for machine learning algorithms. |
+| `mlr3filter` | Feature filtering |
+| `mlr3viz` | Visualisations and plots |
+| `paradox` | Auxiliary package providing (hyper)parameter handling |
+| `mlr3misc` | Auxiliary functions |
+| `mlr3fswrap` | Variable selection wrappers |
+| `mlr3survival` | Extensions for survival analysis |
+| `mlr3ordinal` | Extensions for ordinal regression |
+| `mlr3spatiotemporal` | Extensions for spatiotemporal resampling methods |
+| `mlr3hyperband` | Implements the "hyperband" approach for hyperparameter tuning |
+
+???
+mlr3fswrap	Variable selection wrappers like sequential forward/backward search, exhaustive search, or genetic algorithms.
+---
+# mlr3 extension packages &lt;strong&gt;planned&lt;/strong&gt;
+
+| Package | Functionality |
+| :-      | :------------ |
+| `mlr3cluster` | Extensions for cluster analysis |
+| `mlr3fda` | Extensions for functional data analysis |
+| `mlr3forecasting` | Extensions for forecasting |
+| `mlr3keras` | Extnensions for deep learning via keras |
+| `mlr3extralearners` | Extension to source additional learners from remote sources |
+
+---
+
+# mlr3 overview
 pre-defined tasks, learners, resamplings, and measures are stored in the following R6 dictionaries:
 - mlr_tasks
 - mlr_learners
@@ -202,13 +236,6 @@ as.data.table(mlr_learners)[,list(key,packages, predict_types)]
 
 ---
 
-# mlr3 extension packages
-
-
-<div id="htmlwidget-e9344b41ffd6b1d71985" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-e9344b41ffd6b1d71985">{"x":{"filter":"none","fillContainer":false,"data":[["1","2","3","4","5","6","7","8","9","10","11","12"],["mlr3","mlr3db","mlr3learners","mlr3pipelines","mlr3tuning","mlr3filters","mlr3fswrap","mlr3survival","mlr3ordinal","mlr3viz","mlr3spatiotemporal","mlr3hyperband"],["Core learners and base functionality.","DataBackend for dplyr. Allows tasks to operate on various storage systems (Spark, SQL, etc.).","Additional learners for regression and classification.","Pipelines for pre-processing and building complex workflows.","Hyperparameter tuning via random search, grid search, …","Variable selection filters.","Variable selection wrappers like sequential forward/backward search, exhaustive search, or genetic algorithms.","Extensions for survival analysis.","Extensions for ordinal regression.","Extensions for visualization of mlr3 objects.","Extensions for spatiotemporal resampling methods.","Implements the “hyperband” approach for hyperparamter tuning."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>package<\/th>\n      <th>Function<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":15,"dom":"t","order":[],"autoWidth":false,"orderClasses":false,"columnDefs":[{"orderable":false,"targets":0}],"lengthMenu":[10,15,25,50,100]}},"evals":[],"jsHooks":[]}</script>
-
----
 # mlr3 learners: extension package loaded
 
 ```r
@@ -243,13 +270,78 @@ as.data.table(mlr_learners)[,list(key,packages, predict_types)]
 ```
 
 ---
-# mlr3 extension packages &lt;strong&gt;planned&lt;/strong&gt;
 
-<div id="htmlwidget-ee5a45103ef63e4e0493" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-ee5a45103ef63e4e0493">{"x":{"filter":"none","fillContainer":false,"data":[["1","2","3","4","5"],["mlr3cluster","mlr3fda","mlr3forecasting","mlr3kereas","mlr3extralearners"],["Extensions for cluster analysis.","Extensions for functional data analysis.","Extensions for forecasting.","Extensions for deep learning via keras.","Extension to source additional learners from remote sources, like GitHub."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>package<\/th>\n      <th>Function<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":15,"dom":"t","order":[],"autoWidth":false,"orderClasses":false,"columnDefs":[{"orderable":false,"targets":0}],"lengthMenu":[10,15,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+# mlr3 resamplings
+
+```r
+as.data.table(mlr_resamplings)
+```
+
+```
+##            key                 params iters
+## 1:   bootstrap stratify,repeats,ratio    30
+## 2:      custom                            0
+## 3:          cv         stratify,folds    10
+## 4:     holdout         stratify,ratio     1
+## 5: repeated_cv stratify,repeats,folds   100
+## 6: subsampling stratify,repeats,ratio    30
+```
 
 ---
-# Setup
+
+# mlr3 measures
+.pull-left[
+
+```r
+as.data.table(mlr_measures)[task_type == "classif"][,.(key)]
+```
+
+```
+##                     key
+##  1:         classif.acc
+##  2:         classif.auc
+##  3:          classif.ce
+##  4:       classif.costs
+##  5:         classif.dor
+##  6:     classif.f_score
+##  7:         classif.fdr
+##  8:          classif.fn
+##  9:         classif.fnr
+## 10:         classif.for
+## 11:          classif.fp
+## 12:         classif.fpr
+## 13:         classif.npv
+## 14:         classif.ppv
+## 15:   classif.precision
+## 16:      classif.recall
+## 17: classif.sensitivity
+## 18: classif.specificity
+## 19:          classif.tn
+## 20:         classif.tnr
+## 21:          classif.tp
+## 22:         classif.tpr
+##                     key
+```
+]
+
+.pull-right[
+
+```r
+as.data.table(mlr_measures)[task_type != "classif", .(key)]
+```
+
+```
+##          key
+## 1:  regr.mae
+## 2:  regr.mse
+## 3: regr.rmse
+```
+
+]
+
+---
+
+# installation
 
 Install the mlr3 packages from [Github](https://github.com/mlr-org):
 
@@ -265,18 +357,6 @@ remotes::install_github("mlr-org/mlr3pipelines")
 ```
 
 
-Load packages
-
-
-```r
-library(data.table)
-library(mlr3)
-library(mlr3viz)
-library(mlr3learners)
-library(mlr3pipelines)
-library(mlr3tuning)
-```
-
 .footnote[
 [1] Check [mlr3 github page](https://github.com/mlr-org/mlr3) for current installation instructions 
 
@@ -284,196 +364,63 @@ library(mlr3tuning)
 ]
 
 ---
-# Load and clean data
 
+# modeling
+Considering how we are going to tackle the problem relates closely to what `mlr3` entities we will use.
 
-```r
-customerDT &lt;- fread(here::here("00_Data/raw", 
-                               "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
-```
-
-
-
-```r
-customerDT[,c("customerID", "TotalCharges", "gender", "PhoneService") := NULL][
-    ,Churn := as.factor(Churn)][
-      , SeniorCitizen := ifelse(SeniorCitizen == 1, "Yes", "No")]
-```
-
+- What is the problem we are trying to solve?
+  - i.e. what **Task** do we use?
+  - Binary classification.
+  - `\(\Rightarrow\)` We use `TaskClassif`.
+- What are appropriate learning algorithms?
+  - i.e. what **Learner** do we use?
+  - Logistic regression, CART, Random Forest
+  - `\(\Rightarrow\)` `lrn("classif.log_reg")`, `lrn("classif.rpart")`, `lrn("classif.ranger")`
+- How do we evaluate "good" performance? `\(\Rightarrow\)` Depends on many things! Cost of false positive vs. false negative, legal requirements, ...
+  - i.e. what **Measure** do we use?
+  - We start with misclassification error and will also consider AUC.
+  - `\(\Rightarrow\)` `msr("classif.ce")`, `msr("classif.auc")`
+  
 ---
-# Create Task
+# create task
 
-a new task is created with:
+a new classification task is created with:
 
+`task = TaskClassif$new(id = "GermanCredit", backend = credit, target = "class")`
 
-```r
-tsk_cust &lt;- TaskClassif$new(id = "churn", backend = customerDT, 
-                            target = "Churn", positive = "Yes")
-```
+- id = task identifier, optional
+- backend = backend sets the dataset for the task. 
+- target =  target variable in the backend dataset. 
+- positive = optional - which factor of the target variable is the positive class.
 
-- id = "churn" --&gt; task identifier, optional
-- backend = customerDT --&gt; backend sets the dataset for the task. 
-- target = "Churn" --&gt; target variable in the backend dataset 
-- positive = "Yes" --&gt; what factor of the target variable is the positive class
-
----
-# Review task
 The created task is an R6 object. There are several methods that can be used to review the task details.
 
-- `tsk_cust`
-- `tsk_cust$ncol`
-- `tsk_cust$nrow`
-- `tsk_cust$formula()`
-- `tsk_cust$feature_names`
-- `tsk_cust$feature_types`
-- `tsk_cust$class_names`
-- `tsk_cust$col_roles`
-- `tsk_cust$data()`
-
-
-```r
-tsk_cust
-```
-
-```
-## &lt;TaskClassif:churn&gt; (7043 x 17)
-## * Target: Churn
-## * Properties: twoclass
-## * Features (16):
-##   - chr (14): Contract, Dependents, DeviceProtection,
-##     InternetService, MultipleLines, OnlineBackup, OnlineSecurity,
-##     PaperlessBilling, Partner, PaymentMethod, SeniorCitizen,
-##     StreamingMovies, StreamingTV, TechSupport
-##   - dbl (1): MonthlyCharges
-##   - int (1): tenure
-```
----
-
-```r
-tsk_cust$ncol
-```
-
-```
-## [1] 17
-```
-
-
-```r
-tsk_cust$nrow
-```
-
-```
-## [1] 7043
-```
-
-
-```r
-tsk_cust$formula()
-```
-
-```
-## Churn ~ .
-## NULL
-```
-
-
-```r
-tsk_cust$feature_names
-```
-
-```
-##  [1] "Contract"         "Dependents"       "DeviceProtection"
-##  [4] "InternetService"  "MonthlyCharges"   "MultipleLines"   
-##  [7] "OnlineBackup"     "OnlineSecurity"   "PaperlessBilling"
-## [10] "Partner"          "PaymentMethod"    "SeniorCitizen"   
-## [13] "StreamingMovies"  "StreamingTV"      "TechSupport"     
-## [16] "tenure"
-```
+| method | outputs |
+| :-      | :------------ |
+| `task` | review task properties |
+| `task$ncol` | number of columns in task (dataset)|
+| `task$nrow` | number of rows in task (dataset) |
+| `task$formula()` | default modeling formula |
+| `task$feature_names` | list of feature names |
+| `task$feature_types` | feature data types |
+| `task$class_names` | target variable classes |
+| `task$col_roles` | role of each column (typically features and target) |
+| `task$data()` | dataset defined in task |
 
 ---
 
-```r
-tsk_cust$feature_types
-```
-
-```
-##                   id      type
-##  1:         Contract character
-##  2:       Dependents character
-##  3: DeviceProtection character
-##  4:  InternetService character
-##  5:   MonthlyCharges   numeric
-##  6:    MultipleLines character
-##  7:     OnlineBackup character
-##  8:   OnlineSecurity character
-##  9: PaperlessBilling character
-## 10:          Partner character
-## 11:    PaymentMethod character
-## 12:    SeniorCitizen character
-## 13:  StreamingMovies character
-## 14:      StreamingTV character
-## 15:      TechSupport character
-## 16:           tenure   integer
-```
-
-
-```r
-tsk_cust$class_names
-```
-
-```
-## [1] "Yes" "No"
-```
-
----
-# Split data
+# split data
 
 In mlr3, we do not create train and test data sets, but instead keep only a vector of train and test indices.
 
+`set.seed(4411)`
 
-```r
-set.seed(4411)
-train.idx &lt;- sample(seq_len(tsk_cust$nrow), 0.7 * tsk_cust$nrow)
-test.idx &lt;- setdiff(seq_len(tsk_cust$nrow), train.idx)
-```
+`train.idx &lt;- sample(seq_len(task$nrow), 0.7 * task$nrow)`
 
-
-```r
-length(train.idx)
-```
-
-```
-## [1] 4930
-```
-
-```r
-length(test.idx)
-```
-
-```
-## [1] 2113
-```
-
+`test.idx &lt;- setdiff(seq_len(task$nrow), train.idx)`
 
 ---
 
-# remark.js
-
-You can see an introduction of remark.js from [its homepage](https://remarkjs.com). You should read the [remark.js Wiki](https://github.com/gnab/remark/wiki) at least once to know how to
-
-- create a new slide (Markdown syntax&lt;sup&gt;*&lt;/sup&gt; and slide properties);
-
-- format a slide (e.g. text alignment);
-
-- configure the slideshow;
-
-- and use the presentation (keyboard shortcuts).
-
-It is important to be familiar with remark.js before you can understand the options in **xaringan**.
-
-.footnote[[*] It is different with Pandoc's Markdown! It is limited but should be enough for presentation purposes. Come on... You do not need a slide for the Table of Contents! Well, the Markdown support in remark.js [may be improved](https://github.com/gnab/remark/issues/142) in the future.]
-
----
 class: inverse, middle, center
 
 # Using xaringan
@@ -679,8 +626,8 @@ DT::datatable(
 )
 ```
 
-<div id="htmlwidget-d4ddb530e212d3cb9f82" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-d4ddb530e212d3cb9f82">{"x":{"filter":"none","fillContainer":false,"data":[["1","2","3","4","5","6","7","8","9","10"],[5.1,4.9,4.7,4.6,5,5.4,4.6,5,4.4,4.9],[3.5,3,3.2,3.1,3.6,3.9,3.4,3.4,2.9,3.1],[1.4,1.4,1.3,1.5,1.4,1.7,1.4,1.5,1.4,1.5],[0.2,0.2,0.2,0.2,0.2,0.4,0.3,0.2,0.2,0.1],["setosa","setosa","setosa","setosa","setosa","setosa","setosa","setosa","setosa","setosa"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Sepal.Length<\/th>\n      <th>Sepal.Width<\/th>\n      <th>Petal.Length<\/th>\n      <th>Petal.Width<\/th>\n      <th>Species<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":8,"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[8,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-7d076203f678855759c9" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-7d076203f678855759c9">{"x":{"filter":"none","fillContainer":false,"data":[["1","2","3","4","5","6","7","8","9","10"],[5.1,4.9,4.7,4.6,5,5.4,4.6,5,4.4,4.9],[3.5,3,3.2,3.1,3.6,3.9,3.4,3.4,2.9,3.1],[1.4,1.4,1.3,1.5,1.4,1.7,1.4,1.5,1.4,1.5],[0.2,0.2,0.2,0.2,0.2,0.4,0.3,0.2,0.2,0.1],["setosa","setosa","setosa","setosa","setosa","setosa","setosa","setosa","setosa","setosa"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Sepal.Length<\/th>\n      <th>Sepal.Width<\/th>\n      <th>Petal.Length<\/th>\n      <th>Petal.Width<\/th>\n      <th>Species<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":8,"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[8,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
 
 ---
 
@@ -978,13 +925,13 @@ names(xaringan:::list_css())
 ##  [4] "default"          "duke-blue"        "fc-fonts"        
 ##  [7] "fc"               "hygge-duke"       "hygge"           
 ## [10] "kunoichi"         "lucy-fonts"       "lucy"            
-## [13] "metropolis-fonts" "metropolis"       "middlebury-fonts"
-## [16] "middlebury"       "mlr"              "mlr3"            
-## [19] "ninjutsu"         "rladies-fonts"    "rladies"         
-## [22] "robot-fonts"      "robot"            "rutgers-fonts"   
-## [25] "rutgers"          "shinobi"          "tamu-fonts"      
-## [28] "tamu"             "uo-fonts"         "uo"              
-## [31] "uol-fonts"        "uol"
+## [13] "matt"             "metropolis-fonts" "metropolis"      
+## [16] "middlebury-fonts" "middlebury"       "mlr"             
+## [19] "mlr3"             "ninjutsu"         "rladies-fonts"   
+## [22] "rladies"          "robot-fonts"      "robot"           
+## [25] "rutgers-fonts"    "rutgers"          "shinobi"         
+## [28] "tamu-fonts"       "tamu"             "uo-fonts"        
+## [31] "uo"               "uol-fonts"        "uol"
 ```
 
 ---

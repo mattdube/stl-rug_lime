@@ -1,5 +1,5 @@
 ---
-title: "Next Generation Maching Learning in R"
+title: "Maching Learning in R with mlr3"
 subtitle: "with mlr3"
 author: "Matt Dube"
 date: "2019/09/26 (updated: `r Sys.Date()`)"
@@ -30,8 +30,11 @@ Topic Overview
 
 - what we will be covering
   - overview of mlr3 and the mlr3 family of packages
-  - several small examples, and
-  - one demo that puts it all together
+  - several small demos, and
+  - a bigger demo that puts it all together
+
+- the dataset we'll be using for the demos is the attrition dataset from the rsample package.
+ - I've set aside 15% of the dataset to be used as "new data"
 
 <b>Keep in mind:</b>
 - mlr3 (and extension packages) are under active development
@@ -149,7 +152,41 @@ The mlr3 package provides R6 classes for the essential building blocks of the ma
 ]
 
 ---
-# mlr3 Overview
+
+# mlr3 and its extension packages
+
+| Package | Functionality |
+| :-      | :------------ |
+| `mlr3`  | Framework for machine learning: `Task`, `Learner`, `resample()` and `benchmark()` |
+| `mlr3learners` | Concrete `Learner`s for many popular machine learning implementations |
+| `mlr3pipelines` | Dataflow programming of machine learning workflows. |
+| `mlr3tuning` | Hyperparameter tuning for machine learning algorithms. |
+| `mlr3filter` | Feature filtering |
+| `mlr3viz` | Visualisations and plots |
+| `paradox` | Auxiliary package providing (hyper)parameter handling |
+| `mlr3misc` | Auxiliary functions |
+| `mlr3fswrap` | Variable selection wrappers |
+| `mlr3survival` | Extensions for survival analysis |
+| `mlr3ordinal` | Extensions for ordinal regression |
+| `mlr3spatiotemporal` | Extensions for spatiotemporal resampling methods |
+| `mlr3hyperband` | Implements the "hyperband" approach for hyperparameter tuning |
+
+???
+mlr3fswrap	Variable selection wrappers like sequential forward/backward search, exhaustive search, or genetic algorithms.
+---
+# mlr3 extension packages <strong>planned</strong>
+
+| Package | Functionality |
+| :-      | :------------ |
+| `mlr3cluster` | Extensions for cluster analysis |
+| `mlr3fda` | Extensions for functional data analysis |
+| `mlr3forecasting` | Extensions for forecasting |
+| `mlr3keras` | Extnensions for deep learning via keras |
+| `mlr3extralearners` | Extension to source additional learners from remote sources |
+
+---
+
+# mlr3 overview
 pre-defined tasks, learners, resamplings, and measures are stored in the following R6 dictionaries:
 - mlr_tasks
 - mlr_learners
@@ -171,20 +208,6 @@ as.data.table(mlr_learners)[,list(key,packages, predict_types)]
 
 ---
 
-# mlr3 extension packages
-```{r, echo=FALSE}
-mlr3_ext <- data.table::fread(here::here("00_Data/raw/mlr3_package_list.csv"))
-mlr3_planned <- data.table::fread(here::here("00_Data/raw/mlr3_planned.csv"))
-```
-
-```{r eval=require('DT'), tidy=FALSE, echo=FALSE}
-DT::datatable(
-  mlr3_ext,
-  fillContainer = FALSE, options = list(pageLength = 15,dom = 't')
-)
-```
-
----
 # mlr3 learners: extension package loaded
 ```{r}
 library(mlr3learners)
@@ -192,17 +215,31 @@ as.data.table(mlr_learners)[,list(key,packages, predict_types)]
 ```
 
 ---
-# mlr3 extension packages <strong>planned</strong>
 
-```{r eval=require('DT'), tidy=FALSE, echo=FALSE}
-DT::datatable(
-  mlr3_planned,
-  fillContainer = FALSE, options = list(pageLength = 15,dom = 't')
-)
+# mlr3 resamplings
+```{r}
+as.data.table(mlr_resamplings)
 ```
 
 ---
-# Setup
+
+# mlr3 measures
+.pull-left[
+```{r}
+as.data.table(mlr_measures)[task_type == "classif"][,.(key)]
+```
+]
+
+.pull-right[
+```{r}
+as.data.table(mlr_measures)[task_type != "classif", .(key)]
+```
+
+]
+
+---
+
+# installation
 
 Install the mlr3 packages from [Github](https://github.com/mlr-org):
 
@@ -217,17 +254,6 @@ remotes::install_github("mlr-org/mlr3pipelines")
 ```
 
 
-Load packages
-
-```{r, eval=FALSE}
-library(data.table)
-library(mlr3)
-library(mlr3viz)
-library(mlr3learners)
-library(mlr3pipelines)
-library(mlr3tuning)
-```
-
 .footnote[
 [1] Check [mlr3 github page](https://github.com/mlr-org/mlr3) for current installation instructions 
 
@@ -235,114 +261,63 @@ library(mlr3tuning)
 ]
 
 ---
-# Load and clean data
 
-```{r load_data}
-customerDT <- fread(here::here("00_Data/raw", 
-                               "WA_Fn-UseC_-Telco-Customer-Churn.csv"))
-```
+# modeling
+Considering how we are going to tackle the problem relates closely to what `mlr3` entities we will use.
 
-
-```{r clean_data}
-customerDT[,c("customerID", "TotalCharges", "gender", "PhoneService") := NULL][
-    ,Churn := as.factor(Churn)][
-      , SeniorCitizen := ifelse(SeniorCitizen == 1, "Yes", "No")]
-```
-
+- What is the problem we are trying to solve?
+  - i.e. what **Task** do we use?
+  - Binary classification.
+  - $\Rightarrow$ We use `TaskClassif`.
+- What are appropriate learning algorithms?
+  - i.e. what **Learner** do we use?
+  - Logistic regression, CART, Random Forest
+  - $\Rightarrow$ `lrn("classif.log_reg")`, `lrn("classif.rpart")`, `lrn("classif.ranger")`
+- How do we evaluate "good" performance? $\Rightarrow$ Depends on many things! Cost of false positive vs. false negative, legal requirements, ...
+  - i.e. what **Measure** do we use?
+  - We start with misclassification error and will also consider AUC.
+  - $\Rightarrow$ `msr("classif.ce")`, `msr("classif.auc")`
+  
 ---
-# Create Task
+# create task
 
-a new task is created with:
+a new classification task is created with:
 
-```{r create_task}
-tsk_cust <- TaskClassif$new(id = "churn", backend = customerDT, 
-                            target = "Churn", positive = "Yes")
-```
+`task = TaskClassif$new(id = "GermanCredit", backend = credit, target = "class")`
 
-- id = "churn" --> task identifier, optional
-- backend = customerDT --> backend sets the dataset for the task. 
-- target = "Churn" --> target variable in the backend dataset 
-- positive = "Yes" --> what factor of the target variable is the positive class
+- id = task identifier, optional
+- backend = backend sets the dataset for the task. 
+- target =  target variable in the backend dataset. 
+- positive = optional - which factor of the target variable is the positive class.
 
----
-# Review task
 The created task is an R6 object. There are several methods that can be used to review the task details.
 
-- `tsk_cust`
-- `tsk_cust$ncol`
-- `tsk_cust$nrow`
-- `tsk_cust$formula()`
-- `tsk_cust$feature_names`
-- `tsk_cust$feature_types`
-- `tsk_cust$class_names`
-- `tsk_cust$col_roles`
-- `tsk_cust$data()`
-
-```{r}
-tsk_cust
-```
----
-```{r}
-tsk_cust$ncol
-```
-
-```{r}
-tsk_cust$nrow
-```
-
-```{r}
-tsk_cust$formula()
-```
-
-```{r}
-tsk_cust$feature_names
-```
+| method/field | outputs |
+| :-      | :------------ |
+| `task` | review task properties |
+| `task$ncol` | number of columns in task (dataset)|
+| `task$nrow` | number of rows in task (dataset) |
+| `task$formula()` | default modeling formula |
+| `task$feature_names` | list of feature names |
+| `task$feature_types` | feature data types |
+| `task$class_names` | target variable classes |
+| `task$col_roles` | role of each column (typically features and target) |
+| `task$data()` | dataset defined in task |
 
 ---
-```{r}
-tsk_cust$feature_types
-```
 
-```{r}
-tsk_cust$class_names
-```
-
----
-# Split data
+# split data
 
 In mlr3, we do not create train and test data sets, but instead keep only a vector of train and test indices.
 
-```{r, split_data}
-set.seed(4411)
-train.idx <- sample(seq_len(tsk_cust$nrow), 0.7 * tsk_cust$nrow)
-test.idx <- setdiff(seq_len(tsk_cust$nrow), train.idx)
-```
+`set.seed(4411)`
 
-```{r, review_split}
-length(train.idx)
-length(test.idx)
-```
+`train.idx <- sample(seq_len(task$nrow), 0.7 * task$nrow)`
 
+`test.idx <- setdiff(seq_len(task$nrow), train.idx)`
 
 ---
 
-# remark.js
-
-You can see an introduction of remark.js from [its homepage](https://remarkjs.com). You should read the [remark.js Wiki](https://github.com/gnab/remark/wiki) at least once to know how to
-
-- create a new slide (Markdown syntax<sup>*</sup> and slide properties);
-
-- format a slide (e.g. text alignment);
-
-- configure the slideshow;
-
-- and use the presentation (keyboard shortcuts).
-
-It is important to be familiar with remark.js before you can understand the options in **xaringan**.
-
-.footnote[[*] It is different with Pandoc's Markdown! It is limited but should be enough for presentation purposes. Come on... You do not need a slide for the Table of Contents! Well, the Markdown support in remark.js [may be improved](https://github.com/gnab/remark/issues/142) in the future.]
-
----
 class: inverse, middle, center
 
 # Using xaringan
