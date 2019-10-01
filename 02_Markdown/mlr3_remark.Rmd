@@ -123,7 +123,7 @@ Additionally you need to implement infrastructure to:
 
 - light on dependencies 
  - ~ 10 packages – 4 of which are developed by mlr team
- - R6, data.table, Metrics, lgr 
+ - R6, data.table, Metrics, lgr, digest, uuid, mlbench 
 
 - utilizes future and future.apply for parallelization
 
