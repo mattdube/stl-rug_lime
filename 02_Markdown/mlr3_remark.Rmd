@@ -368,8 +368,8 @@ class: inverse, middle, center
 # Deck not Complete 
 
 Need links to:
-- demo markdown html files
-- additional online resources
+    - demo markdown html files
+    - additional online resources
 
 ---
 
