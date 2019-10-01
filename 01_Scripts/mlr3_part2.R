@@ -76,6 +76,10 @@ for(i in 1:p$nrow) {
 
 p
 
+table(customerDT$Churn)
+table(customerDT[test.idx]$Churn)
+table(customerDT[train.idx]$Churn)
+
 # split data train/test
 set.seed(4411)
 train.idx <- sample(seq_len(tsk_cust$nrow), 0.7 * tsk_cust$nrow)
